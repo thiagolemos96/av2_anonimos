@@ -14,19 +14,27 @@ export default function Chat() {
   const [mensagens, setMensagens] = useState([])
   const [caixaTexto, setCaixaTexto] = useState('')
   const [scrollview, setScrollview] = useState('')
-  const [teste, setTeste] = useState('')
+  const [mensagensPrivadas, setMensagensPrivadas] = useState([])
+  const [isPrivate, setPrivate] = useState(false);
+  const [otherUser, setOtherUser] = useState(null)
 
 
   const db = firebase.firestore()
   let mensagens_enviadas = []
-  const salvar = () => {
+  const salvar = (nomeDaSala) => {
+    // if(nomeDaSala != 'sala_01'){
+    //   let nomeUser = user.name.replace(" ", "_");
+    //   nomeDaSala = "sala_" + nomeUser;
+    // }
+    console.log(nomeDaSala)
     api.post('/enviarMensagem', {
       mensagem: caixaTexto,
       usuario: user.name,
       avatar: user.picture,
+      nomeDoBanco: nomeDaSala
     })
       .then(function () {
-        // setMensagens([...mensagens, caixaTexto])
+        setMensagens([...mensagens, caixaTexto])
         setCaixaTexto('')
         scrollview.scrollToEnd({ animated: true })
       }).catch(function () {
@@ -71,60 +79,141 @@ export default function Chat() {
       });
   }
 
+  const carregaMensagensPrivadas = (nomeDaSala) => {
+    let mensagens_enviadas = [];
+    console.log(nomeDaSala)
+    const unsubscribe = db.collection("chats")
+      .doc(nomeDaSala).collection('mensagens')
+      .onSnapshot({ includeMetadataChanges: false }, function (snapshot) {
+        snapshot.docChanges().forEach(function (change) {
+          if (change.type === "added") {
+            const { mensagem, usuario, avatar } = change.doc.data()
+            const id = change.doc.id
+            mensagens_enviadas.push({ mensagem, usuario, avatar, id })
+          }
+        })
+        setMensagensPrivadas([...mensagens_enviadas])
+        //scrollview ? scrollview.scrollToEnd({ animated: true }) : null;
+      })
+    return () => {
+      unsubscribe()
+    }
+  }
+
+  const chatIndidual = (usuario) => {
+    let nomeUser = usuario.usuario.replace(" ", "_");
+    let nomeDaSala = "sala_" + nomeUser;
+    usuario.nomeDaSala = nomeDaSala;
+    setPrivate(true); 
+    setOtherUser(usuario)
+    carregaMensagensPrivadas(nomeDaSala)
+      console.log('usuario:', usuario)
+  }
+
   return (
     <View style={styles.view}>
-
-      {user &&
+      { !isPrivate && 
         <>
-          <TouchableOpacity onPress={carregaUsuarioAnonimo}>
+        {user &&
+          <>
+            <TouchableOpacity onPress={carregaUsuarioAnonimo}>
 
-            <Image
-              style={styles.avatar}
-              source={{ uri: user.picture }} />
+              <Image
+                style={styles.avatar}
+                source={{ uri: user.picture }} />
+            </TouchableOpacity>
+
+            <Text style={styles.nome_usuario}>{user.name}</Text>
+          </>
+
+        }
+
+
+
+        <ScrollView style={styles.scrollview} ref={(view) => { setScrollview(view) }}>
+          {
+            mensagens.length > 0 && mensagens.map(item => (
+              <TouchableOpacity onPress={() => {chatIndidual(item)}}>
+              <View key={item.id} style={styles.linha_conversa}>
+                <Image style={styles.avatar_conversa} source={{ uri: item.avatar }} />
+                <View style={{ flexDirection: 'column', marginTop: 5 }}>
+                  <Text style={{ fontSize: 12, color: '#999' }}>{item.usuario}</Text>
+                  <Text>{item.mensagem}</Text>
+                </View>
+
+              </View>
+              </TouchableOpacity>
+            ))
+          }
+        </ScrollView>
+
+
+        <View style={styles.footer}>
+          <TextInput
+            style={styles.input_mensagem}
+            onChangeText={text => setCaixaTexto(text)}
+            value={caixaTexto} />
+
+          <TouchableOpacity onPress={ () => {salvar('sala_01')}}>
+            <Ionicons style={{ margin: 3 }} name="md-send" size={32} color={'#999'} />
           </TouchableOpacity>
-
-          <Text style={styles.nome_usuario}>{user.name}</Text>
+        </View>
         </>
+      }
+      { isPrivate &&
+        <>
+          {user &&
+          <>
+            <TouchableOpacity onPress={carregaUsuarioAnonimo}>
+            <TouchableOpacity onPress={ () => {setPrivate(false);}}>
+              <Ionicons style={styles.back} name="md-arrow-back" size={32} color={'#999'} />
+            </TouchableOpacity>
+              <Image
+                style={styles.avatar}
+                source={{ uri: otherUser.avatar }} />
+            </TouchableOpacity>
 
+            <Text style={styles.nome_usuario}>Sala {otherUser.usuario}</Text>
+          </>
+
+        }
+
+
+
+        <ScrollView style={styles.scrollview} ref={(view) => { setScrollview(view) }}>
+          {
+            mensagensPrivadas.length > 0 && mensagensPrivadas.map(item => (
+              <View key={item.id} style={styles.linha_conversa}>
+                <Image style={styles.avatar_conversa} source={{ uri: item.avatar }} />
+                <View style={{ flexDirection: 'column', marginTop: 5 }}>
+                  <Text style={{ fontSize: 12, color: '#999' }}>{item.usuario}</Text>
+                  <Text>{item.mensagem}</Text>
+                </View>
+
+              </View>
+            ))
+          }
+        </ScrollView>
+
+
+        <View style={styles.footer}>
+        <Image style={styles.avatar_conversa} source={{ uri: user.picture }} />
+          <TextInput
+            style={styles.input_mensagem}
+            onChangeText={text => setCaixaTexto(text)}
+            value={caixaTexto} />
+
+          <TouchableOpacity onPress={ () => {salvar(otherUser.nomeDaSala)}}>
+            <Ionicons style={{ margin: 3 }} name="md-send" size={32} color={'#999'} />
+          </TouchableOpacity>
+        </View>
+        </>
+        
       }
 
 
-
-      <ScrollView style={styles.scrollview} ref={(view) => { setScrollview(view) }}>
-        {
-          mensagens.length > 0 && mensagens.map(item => (
-
-            <View key={item.id} style={styles.linha_conversa}>
-              <Image style={styles.avatar_conversa} source={{ uri: item.avatar }} />
-              <View style={{ flexDirection: 'column', marginTop: 5 }}>
-                <Text style={{ fontSize: 12, color: '#999' }}>{item.usuario}</Text>
-                <Text>{item.mensagem}</Text>
-              </View>
-
-            </View>
-
-
-
-
-          ))
-        }
-      </ScrollView>
-
-
-      <View style={styles.footer}>
-        <TextInput
-          style={styles.input_mensagem}
-          onChangeText={text => setCaixaTexto(text)}
-          value={caixaTexto} />
-
-        <TouchableOpacity onPress={salvar}>
-          <Ionicons style={{ margin: 3 }} name="md-send" size={32} color={'#999'} />
-        </TouchableOpacity>
-      </View>
-
-
-
-    </View>)
+    </View>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -184,5 +273,9 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     paddingTop: 10,
     marginRight: 60,
+  },
+  back: {
+    position: "relative",
+    right: 100
   }
 })

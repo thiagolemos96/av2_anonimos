@@ -16,7 +16,7 @@ let db = admin.firestore();
 
 exports.enviarMensagem = functions.https
   .onRequest((request, response) => {
-    let queryRef = db.collection('chats').doc('sala_01')
+    let queryRef = db.collection('chats').doc(request.body.nomeDoBanco)
       .collection('mensagens').doc();
 
     queryRef.set({

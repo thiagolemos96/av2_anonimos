@@ -16,7 +16,7 @@ export default function Home() {
 
   const [imagem, setImagem] = useState(null);
 
-  uploadImagem = async (uri) => {
+  async function uploadImagem(uri) {
     const response = await fetch(uri);
     const blob = await response.blob();
     const filename = new Date().getTime();
@@ -32,7 +32,7 @@ export default function Home() {
     })
   }
 
-  escolherImagem = async () => {
+  async function escolherImagem() {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
