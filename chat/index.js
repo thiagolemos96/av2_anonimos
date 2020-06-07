@@ -25,11 +25,6 @@ export default function Chat() {
   const db = firebaseConfig.firestore()
   let mensagens_enviadas = []
   const salvar = (nomeDaSala) => {
-    // if(nomeDaSala != 'sala_01'){
-    //   let nomeUser = user.name.replace(" ", "_");
-    //   nomeDaSala = "sala_" + nomeUser;
-    // }
-    console.log(nomeDaSala)
     api.post('/enviarMensagem', {
       mensagem: caixaTexto,
       usuario: user.name,
@@ -71,7 +66,6 @@ export default function Chat() {
 
   function carregaUsuarioAnonimo() {
     if(isLogado){
-      console.log("asdfasdasdfafa")
       setUser({
         name: firebase.auth().currentUser.displayName,
         picture: firebase.auth().currentUser.photoURL
@@ -115,14 +109,13 @@ export default function Chat() {
     }
   }
 
-  const chatIndidual = (usuario) => {
+  const chatGrupo = (usuario) => {
     let nomeUser = usuario.usuario.replace(" ", "_");
     let nomeDaSala = "sala_" + nomeUser;
     usuario.nomeDaSala = nomeDaSala;
     setPrivate(true); 
     setOtherUser(usuario)
     carregaMensagensPrivadas(nomeDaSala)
-      console.log('usuario:', usuario)
   }
 
   return (
@@ -148,7 +141,7 @@ export default function Chat() {
         <ScrollView style={styles.scrollview} ref={(view) => { setScrollview(view) }}>
           {
             mensagens.length > 0 && mensagens.map(item => (
-              <TouchableOpacity onPress={() => {chatIndidual(item)}}>
+              <TouchableOpacity onPress={() => {chatGrupo(item)}}>
               <View key={item.id} style={styles.linha_conversa}>
                 <Image style={styles.avatar_conversa} source={{ uri: item.avatar }} />
                 <View style={{ flexDirection: 'column', marginTop: 5 }}>
@@ -196,7 +189,7 @@ export default function Chat() {
         <ScrollView style={styles.scrollview} ref={(view) => { setScrollview(view) }}>
           {
             mensagens.length > 0 && mensagens.map(item => (
-              <TouchableOpacity onPress={() => {chatIndidual(item)}}>
+              <TouchableOpacity onPress={() => {chatGrupo(item)}}>
               <View key={item.id} style={styles.linha_conversa}>
                 <Image style={styles.avatar_conversa} source={{ uri: item.avatar }} />
                 <View style={{ flexDirection: 'column', marginTop: 5 }}>

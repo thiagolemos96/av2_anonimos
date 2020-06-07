@@ -25,6 +25,8 @@ export default function App() {
                 : 'ios-information-circle-outline';
             } else if (route.name === 'Chat') {
               iconName = focused ? 'ios-person' : 'ios-person';
+            } else {
+              iconName = focused ? 'create-outline' : 'create-outline';
             }
 
             // You can return any component that you like here!

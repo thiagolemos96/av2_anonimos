@@ -105,7 +105,7 @@ export default function Home() {
             <Image
                 style={styles.avatar}
                 source={{ uri: firebase.auth().currentUser.photoURL }} />
-            <Text style={styles.nome_usuario}>Welcome {firebase.auth().currentUser.displayName}</Text>
+            <Text style={styles.nome_usuario}>Bem-Vindo {firebase.auth().currentUser.displayName}</Text>
 
             </>
           }
