@@ -4,9 +4,11 @@ import {
   StyleSheet, View, Text, YellowBox, Image, ScrollView,
   TextInput, TouchableOpacity
 } from 'react-native';
-import firebase from '../config/firebase';
+import firebaseConfig from '../config/firebase';
 import api from '../services/axios';
 import axios from 'axios';
+
+import firebase from 'firebase';
 
 export default function Chat() {
 
@@ -15,11 +17,12 @@ export default function Chat() {
   const [caixaTexto, setCaixaTexto] = useState('')
   const [scrollview, setScrollview] = useState('')
   const [mensagensPrivadas, setMensagensPrivadas] = useState([])
-  const [isPrivate, setPrivate] = useState(false);
+  const [isPrivate, setPrivate] = useState(false)
   const [otherUser, setOtherUser] = useState(null)
+  const [isLogado, setLogado] = useState(false)
 
 
-  const db = firebase.firestore()
+  const db = firebaseConfig.firestore()
   let mensagens_enviadas = []
   const salvar = (nomeDaSala) => {
     // if(nomeDaSala != 'sala_01'){
@@ -42,7 +45,10 @@ export default function Chat() {
       })
   }
 
-  useEffect(() => {
+  useEffect( async () => {
+    if(await firebase.auth().currentUser){
+      setLogado(true)
+    }
     carregaUsuarioAnonimo()
     let mensagens_enviadas = []
     const unsubscribe = db.collection("chats")
@@ -63,8 +69,15 @@ export default function Chat() {
     }
   }, [])
 
-  const carregaUsuarioAnonimo = () => {
-    axios.get('https://randomuser.me/api/')
+  function carregaUsuarioAnonimo() {
+    if(isLogado){
+      console.log("asdfasdasdfafa")
+      setUser({
+        name: firebase.auth().currentUser.displayName,
+        picture: firebase.auth().currentUser.photoURL
+      })
+    } else {
+      axios.get('https://randomuser.me/api/')
       .then(function (response) {
         const user = response.data.results[0];
         // setDistance(response.data.distance)
@@ -77,6 +90,8 @@ export default function Chat() {
       .catch(function (error) {
         console.log(error);
       });
+    }
+    
   }
 
   const carregaMensagensPrivadas = (nomeDaSala) => {
@@ -112,7 +127,7 @@ export default function Chat() {
 
   return (
     <View style={styles.view}>
-      { !isPrivate && 
+      { !isPrivate && !firebase.auth().currentUser &&
         <>
         {user &&
           <>
@@ -160,6 +175,55 @@ export default function Chat() {
         </View>
         </>
       }
+      {!isPrivate && firebase.auth().currentUser &&
+        <>
+        {user &&
+          <>
+            <TouchableOpacity onPress={carregaUsuarioAnonimo}>
+
+              <Image
+                style={styles.avatar}
+                source={{ uri: firebase.auth().currentUser.photoURL }} />
+            </TouchableOpacity>
+
+            <Text style={styles.nome_usuario}>{firebase.auth().currentUser.displayName}</Text>
+          </>
+
+        }
+
+
+
+        <ScrollView style={styles.scrollview} ref={(view) => { setScrollview(view) }}>
+          {
+            mensagens.length > 0 && mensagens.map(item => (
+              <TouchableOpacity onPress={() => {chatIndidual(item)}}>
+              <View key={item.id} style={styles.linha_conversa}>
+                <Image style={styles.avatar_conversa} source={{ uri: item.avatar }} />
+                <View style={{ flexDirection: 'column', marginTop: 5 }}>
+                  <Text style={{ fontSize: 12, color: '#999' }}>{item.usuario}</Text>
+                  <Text>{item.mensagem}</Text>
+                </View>
+
+              </View>
+              </TouchableOpacity>
+            ))
+          }
+        </ScrollView>
+
+
+        <View style={styles.footer}>
+          <TextInput
+            style={styles.input_mensagem}
+            onChangeText={text => setCaixaTexto(text)}
+            value={caixaTexto} />
+
+          <TouchableOpacity onPress={ () => {salvar('sala_01')}}>
+            <Ionicons style={{ margin: 3 }} name="md-send" size={32} color={'#999'} />
+          </TouchableOpacity>
+        </View>
+        </>
+
+      }
       { isPrivate &&
         <>
           {user &&
@@ -197,7 +261,7 @@ export default function Chat() {
 
 
         <View style={styles.footer}>
-        <Image style={styles.avatar_conversa} source={{ uri: user.picture }} />
+        <Image style={styles.avatar_conversa} source={{ uri: firebase.auth().currentUser ? firebase.auth().currentUser.photoURL : user.picture }} />
           <TextInput
             style={styles.input_mensagem}
             onChangeText={text => setCaixaTexto(text)}

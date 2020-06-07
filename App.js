@@ -3,8 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import Chat from './chat'
-import Home from './home'
+import Chat from './chat';
+import Home from './home';
+import CreateAccount from './createAccount';
 
 export default function App() {
 
@@ -37,6 +38,7 @@ export default function App() {
       >
         <Tab.Screen name="Home" component={Home} />
         <Tab.Screen name="Chat" component={Chat} />
+        <Tab.Screen name="Account" component={CreateAccount} />
 
       </Tab.Navigator>
 
